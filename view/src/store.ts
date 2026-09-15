@@ -1,4 +1,5 @@
 import { createStore, Store } from "vuex";
+import { measuredSpan, overlaps, TimeRange } from "./range";
 
 export type StatusText = "ok" | "fail" | "pending";
 
@@ -64,7 +65,7 @@ const syncSettingsPlugin = (store: Store<typeof state>) => {
     const resp = await fetch(`/api/${key}`);
     if (!resp.ok) {
       return alert(
-        `http error: status=${resp.status}, message=${await resp.text()}`
+        `http error: status=${resp.status}, message=${await resp.text()}`,
       );
     }
 
@@ -101,7 +102,7 @@ export default createStore({
         const resp = await fetch(`/api/${endpoint}`);
         if (!resp.ok) {
           return alert(
-            `http error: status=${resp.status}, message=${await resp.text()}`
+            `http error: status=${resp.status}, message=${await resp.text()}`,
           );
         }
 
@@ -121,7 +122,7 @@ export default createStore({
         });
         if (!resp.ok) {
           return alert(
-            `http error: status=${resp.status}, message=${await resp.text()}`
+            `http error: status=${resp.status}, message=${await resp.text()}`,
           );
         }
 
@@ -137,7 +138,7 @@ export default createStore({
         .filter((e) => e.Snapshot.Type == snapshotType)
         .sort(
           (a, b) =>
-            b.Snapshot.Datetime.getTime() - a.Snapshot.Datetime.getTime()
+            b.Snapshot.Datetime.getTime() - a.Snapshot.Datetime.getTime(),
         );
     },
     entriesByGroup: (state) => (groupId: string) => {
@@ -155,6 +156,26 @@ export default createStore({
       return getters
         .entriesByGroup(groupId)
         .filter((e: Entry) => e.Status == "ok");
+    },
+    entriesInRange: (state) => (range: TimeRange) => {
+      return Object.values(state.entries)
+        .filter((e) =>
+          overlaps(e.Snapshot.Datetime, e.Snapshot.Duration, range),
+        )
+        .sort((a, b) => {
+          const byTime =
+            a.Snapshot.Datetime.getTime() - b.Snapshot.Datetime.getTime();
+          return byTime != 0
+            ? byTime
+            : (a.Snapshot.Label || "").localeCompare(b.Snapshot.Label || "");
+        });
+    },
+    groupRange: (state) => (groupId: string) => {
+      return measuredSpan(
+        Object.values(state.entries)
+          .filter((e) => e.Snapshot.GroupId == groupId)
+          .map((e) => e.Snapshot),
+      );
     },
   },
 });

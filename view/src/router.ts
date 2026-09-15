@@ -5,6 +5,7 @@ import GroupIndex from "./components/GroupIndex.vue";
 import GroupList from "./components/GroupList.vue";
 import HttpLogEntry from "./components/HttpLogEntry.vue";
 import PProfEntry from "./components/PProfEntry.vue";
+import RangeView from "./components/RangeView.vue";
 import SettingList from "./components/SettingList.vue";
 import SlowLogEntry from "./components/SlowLogEntry.vue";
 import MemoEntry from "./components/MemoEntry.vue";
@@ -15,6 +16,13 @@ export default createRouter({
     {
       path: "/",
       redirect: "/group/",
+    },
+    {
+      path: "/range/",
+      component: RangeView,
+      meta: {
+        title: "range",
+      },
     },
     {
       path: "/group/",

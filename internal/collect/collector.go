@@ -46,6 +46,10 @@ const (
 	StatusPending Status = "pending"
 )
 
+// failures have no body to store, so they are kept as whole entries in a bucket
+// shared by every collector
+const failedTypeKey = "failed"
+
 func New(processor Processor, opts *Options) (*Collector, error) {
 	c := &Collector{
 		typ: opts.Type,
@@ -64,6 +68,12 @@ func New(processor Processor, opts *Options) (*Collector, error) {
 		return nil, fmt.Errorf("failed to get snapshots: %w", err)
 	}
 
+	// before any processor runs, so that a snapshot which recovers overwrites
+	// the failure it left behind
+	if err := c.restoreFailures(); err != nil {
+		return nil, fmt.Errorf("failed to get failures: %w", err)
+	}
+
 	for _, raw := range rawSnapshots {
 		snapshot := &Snapshot{store: c.store}
 		if err := snapshot.unmarshal(raw); err != nil {
@@ -76,6 +86,32 @@ func New(processor Processor, opts *Options) (*Collector, error) {
 	return c, nil
 }
 
+func (c *Collector) restoreFailures() error {
+	raws, err := c.store.GetAll(failedTypeKey)
+	if err != nil {
+		return fmt.Errorf("failed to get entries: %w", err)
+	}
+
+	for _, raw := range raws {
+		entry := &Entry{}
+		if err := json.Unmarshal(raw, entry); err != nil {
+			log.Printf("[!] unmarshalling failed entry failed: %v", err)
+			continue
+		}
+		if entry.Snapshot == nil || entry.Snapshot.SnapshotMeta == nil || entry.Snapshot.SnapshotTarget == nil {
+			log.Printf("[!] incomplete failed entry: %v", string(raw))
+			continue
+		}
+		if entry.Snapshot.Type != c.typ {
+			continue
+		}
+
+		entry.Snapshot.store = c.store
+		c.data[entry.Snapshot.ID] = entry
+	}
+	return nil
+}
+
 func (c *Collector) updateStatus(snapshot *Snapshot, status Status, msg string) {
 	entry := &Entry{
 		Snapshot: snapshot,
@@ -86,6 +122,12 @@ func (c *Collector) updateStatus(snapshot *Snapshot, status Status, msg string) 
 	eventData, err := json.Marshal(entry)
 	if err != nil {
 		log.Printf("failed to serialize event: %v", err)
+	}
+
+	if status == StatusFail && eventData != nil {
+		if err := c.store.Put(failedTypeKey, snapshot.ID, eventData); err != nil {
+			log.Printf("failed to save failure: %v", err)
+		}
 	}
 
 	c.mu.Lock()

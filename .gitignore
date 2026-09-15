@@ -3,4 +3,5 @@
 /pprotein-agent
 /data/
 /dist/
-.serena/
+.serena
+.claude

@@ -4,6 +4,9 @@
       <router-link to="/">{{ $data.title }}</router-link>
     </header>
     <nav>
+      <router-link v-slot="{ navigate, isActive }" to="/range/" custom>
+        <div :class="{ active: isActive }" @click="navigate">range</div>
+      </router-link>
       <router-link v-slot="{ navigate, isActive }" to="/group/" custom>
         <div :class="{ active: isActive }" @click="navigate">group</div>
       </router-link>

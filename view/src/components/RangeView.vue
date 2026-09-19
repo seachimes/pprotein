@@ -11,12 +11,19 @@
     <div v-for="type in types" :key="type" class="typeSection">
       <h2>{{ rangeTypeLabels[type] || type }}</h2>
       <template v-if="counts[type]">
-        <RangeEntryCard
-          v-for="entry in entriesByType[type]"
-          :key="entry.Snapshot.ID"
-          :entry="entry"
-          :with-date="datedTimes"
-        />
+        <div
+          v-for="group in labelGroups[type]"
+          :key="group.label"
+          class="labelGroup"
+        >
+          <h3>{{ group.label || "[no label]" }}</h3>
+          <RangeEntryCard
+            v-for="entry in group.entries"
+            :key="entry.Snapshot.ID"
+            :entry="entry"
+            :with-date="datedTimes"
+          />
+        </div>
       </template>
       <p v-else class="empty">No entries in this range</p>
     </div>
@@ -81,6 +88,22 @@ export default defineComponent({
       }
       return grouped;
     },
+    // one host is one column of history: keeping its measurements together is
+    // what makes before/after comparable, so Label groups win over time order
+    labelGroups(): { [type: string]: { label: string; entries: Entry[] }[] } {
+      const grouped: { [type: string]: { label: string; entries: Entry[] }[] } =
+        {};
+      for (const [type, entries] of Object.entries(this.entriesByType)) {
+        const byLabel: { [label: string]: Entry[] } = {};
+        for (const entry of entries) {
+          (byLabel[entry.Snapshot.Label || ""] ||= []).push(entry);
+        }
+        grouped[type] = Object.keys(byLabel)
+          .sort((a, b) => a.localeCompare(b))
+          .map((label) => ({ label, entries: byLabel[label] }));
+      }
+      return grouped;
+    },
     // known types first, then anything a newer collector adds
     types(): string[] {
       const extra = Object.keys(this.entriesByType).filter(
@@ -126,6 +149,17 @@ section {
 
   .empty {
     color: #888;
+  }
+}
+
+.labelGroup {
+  margin-bottom: 1em;
+
+  h3 {
+    font-size: 0.95em;
+    font-weight: bold;
+    color: #555;
+    margin: 0.8em 0 0.4em;
   }
 }
 </style>

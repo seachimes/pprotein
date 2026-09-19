@@ -1,7 +1,6 @@
 <template>
   <details class="card" @toggle="open($event)">
     <summary>
-      <span class="label">{{ snapshot.Label || "[no label]" }}</span>
       <span class="time">{{ timeText }}</span>
       <Status
         :status="$props.entry.Status"
@@ -121,11 +120,6 @@ summary {
   cursor: pointer;
   padding: 0.6em 1em;
   background-color: #f4f4f4;
-
-  .label {
-    font-weight: bold;
-    margin-right: 1em;
-  }
 
   .time {
     color: #666;

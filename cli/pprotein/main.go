@@ -14,6 +14,7 @@ import (
 	"github.com/kaz/pprotein/internal/memo"
 	"github.com/kaz/pprotein/internal/pprof"
 	"github.com/kaz/pprotein/internal/storage"
+	"github.com/kaz/pprotein/internal/version"
 	"github.com/kaz/pprotein/view"
 	"github.com/labstack/echo/v4"
 )
@@ -43,6 +44,10 @@ func start() error {
 			c.Response().Header().Set("Cache-Control", "no-store")
 			return next(c)
 		}
+	})
+
+	api.GET("/version", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, version.Get())
 	})
 
 	hub := event.NewHub()

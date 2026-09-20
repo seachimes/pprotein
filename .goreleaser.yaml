@@ -3,8 +3,8 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - npm --prefix view ci
-    - npm --prefix view run build
+    - pnpm --dir view install --frozen-lockfile
+    - pnpm --dir view run build
 builds:
   - id: pprotein
     binary: pprotein

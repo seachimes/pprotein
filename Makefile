@@ -19,8 +19,8 @@ pprotein-agent:
 	go build -trimpath -ldflags="-w -s" ./cli/pprotein-agent
 
 view/dist:
-	npm --prefix view ci
-	npm --prefix view run build
+	pnpm --dir view install --frozen-lockfile
+	pnpm --dir view run build
 
 .PHONY: clean
 clean:

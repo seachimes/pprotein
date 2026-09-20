@@ -6,10 +6,10 @@
     "dev": "vp dev",
     "build": "vue-tsc --noEmit && vp build",
     "serve": "vp preview",
-    "lint": "oxlint src",
-    "fmt": "oxfmt src",
-    "fix": "oxlint --fix src && oxfmt src",
-    "check": "oxfmt --check src && oxlint src && vue-tsc --noEmit"
+    "lint": "vp lint -c .oxlintrc.json src",
+    "fmt": "vp fmt -c .oxfmtrc.json src",
+    "fix": "vp lint -c .oxlintrc.json --fix src && vp fmt -c .oxfmtrc.json src",
+    "check": "vp fmt -c .oxfmtrc.json --check src && vp lint -c .oxlintrc.json src && vue-tsc --noEmit"
   },
   "dependencies": {
     "@fontsource/courier-prime": "^5.0.17",
@@ -30,5 +30,6 @@
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3"
-  }
+  },
+  "packageManager": "pnpm@11.8.0"
 }

@@ -2,7 +2,7 @@ import { SnapshotTarget } from "./store";
 
 export const addCollectJob = async (
   endpoint: string,
-  target: SnapshotTarget
+  target: SnapshotTarget,
 ): Promise<void> => {
   const resp = await fetch(`/api/${endpoint}`, {
     method: "POST",
@@ -14,7 +14,7 @@ export const addCollectJob = async (
 
   if (!resp.ok) {
     return alert(
-      `http error: status=${resp.status}, message=${await resp.text()}`
+      `http error: status=${resp.status}, message=${await resp.text()}`,
     );
   }
 };

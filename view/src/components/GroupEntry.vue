@@ -10,7 +10,7 @@
       </router-link>
       <router-link
         v-for="entry in $store.getters.availableEntriesByGroup(
-          $route.params.gid
+          $route.params.gid,
         )"
         v-slot="{ navigate, isActive }"
         :key="entry.Snapshot.ID"

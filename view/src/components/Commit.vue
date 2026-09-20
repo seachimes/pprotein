@@ -41,7 +41,7 @@ export default defineComponent({
     repoUrl() {
       const remoteUrl = this.$props.repository?.Remote;
       if (!remoteUrl) {
-        return;
+        return undefined;
       }
 
       const sshMatch = remoteUrl.match(/^git@github\.com:(.+?)\/(.+?)\.git$/);
@@ -50,13 +50,14 @@ export default defineComponent({
       }
 
       const httpsMatch = remoteUrl.match(
-        /^https:\/\/github\.com\/(.+?)\/(.+?)\.git$/
+        /^https:\/\/github\.com\/(.+?)\/(.+?)\.git$/,
       );
       if (httpsMatch) {
         return `https://github.com/${httpsMatch[1]}/${httpsMatch[2]}`;
       }
 
-      return;
+      // Not a GitHub remote: there is no URL to link to.
+      return undefined;
     },
     commitUrl() {
       const repoUrl = this.repoUrl;

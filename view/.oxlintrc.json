@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["vue", "typescript", "oxc", "unicorn", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    // The codebase deliberately sorts copies produced by Object.values() and
+    // .filter(), which already return fresh arrays, so the mutation these rules
+    // warn about cannot be observed by anyone.
+    "unicorn/no-array-sort": "off",
+    "unicorn/no-array-reverse": "off",
+    // Vuex getters and actions conventionally name their first parameter
+    // "state", which shadows the module-level state object by design.
+    "no-shadow": "off",
+    // Side-effect-only imports are how CSS and font packages are pulled in.
+    "import/no-unassigned-import": "off"
+  },
+  "ignorePatterns": ["dist"]
+}

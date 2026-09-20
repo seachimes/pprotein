@@ -57,7 +57,7 @@ export default defineComponent({
       const resp = await fetch(this.url);
       if (!resp.ok) {
         return alert(
-          `http error: status=${resp.status}, message=${await resp.text()}`
+          `http error: status=${resp.status}, message=${await resp.text()}`,
         );
       }
     },

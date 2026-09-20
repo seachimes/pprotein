@@ -29,7 +29,7 @@ export default defineComponent({
     this.sync();
     this.$store.watch(
       () => this.$store.state.settings[this.$props.name],
-      this.sync
+      this.sync,
     );
   },
   methods: {

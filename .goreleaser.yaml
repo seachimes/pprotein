@@ -3,14 +3,18 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - npm --prefix view ci
-    - npm --prefix view run build
+    - pnpm --dir view install --frozen-lockfile
+    - pnpm --dir view run build
 builds:
   - id: pprotein
     binary: pprotein
     main: ./cli/pprotein
     flags:
       - -trimpath
+    # Without this the UI would fall back to a bare commit hash, since
+    # goreleaser builds from a detached checkout.
+    ldflags:
+      - -s -w -X github.com/kaz/pprotein/internal/version.Version={{.Version}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -24,6 +28,8 @@ builds:
     main: ./cli/pprotein-agent
     flags:
       - -trimpath
+    ldflags:
+      - -s -w -X github.com/kaz/pprotein/internal/version.Version={{.Version}}
     env:
       - CGO_ENABLED=0
     goos:

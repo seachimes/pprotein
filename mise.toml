@@ -1,0 +1,6 @@
+[tools]
+# Vite+ requires ^20.19.0 || ^22.18.0 || >=24.11.0. Pinning the toolchain in the
+# repository keeps every contributor and CI on a version that satisfies it,
+# rather than relying on whatever happens to be installed globally.
+node = "24.21.0"
+pnpm = "11.8.0"

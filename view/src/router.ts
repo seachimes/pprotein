@@ -1,4 +1,6 @@
 import { createRouter, createWebHashHistory } from "vue-router";
+import DiagView from "./components/DiagView.vue";
+import DiffView from "./components/DiffView.vue";
 import EntryList from "./components/EntryList.vue";
 import GroupEntry from "./components/GroupEntry.vue";
 import GroupIndex from "./components/GroupIndex.vue";
@@ -16,6 +18,20 @@ export default createRouter({
     {
       path: "/",
       redirect: "/group/",
+    },
+    {
+      path: "/diag/",
+      component: DiagView,
+      meta: {
+        title: "diag",
+      },
+    },
+    {
+      path: "/diff/",
+      component: DiffView,
+      meta: {
+        title: "diff",
+      },
     },
     {
       path: "/range/",

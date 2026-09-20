@@ -41,8 +41,8 @@ export default defineComponent({
       required: true,
     },
     link: {
-      type: String
-    }
+      type: String,
+    },
   },
   data() {
     return {

@@ -11,21 +11,28 @@ import (
 )
 
 type (
-	handler struct {
+	Handler struct {
 		processor collect.Processor
 		opts      *collect.Options
 		collector *collect.Collector
 	}
 )
 
-func NewHandler(processor collect.Processor, opts *collect.Options) *handler {
-	return &handler{
+func NewHandler(processor collect.Processor, opts *collect.Options) *Handler {
+	return &Handler{
 		processor: processor,
 		opts:      opts,
 	}
 }
 
-func (h *handler) Register(g *echo.Group) error {
+// Collector exposes the underlying collector so that cross-cutting consumers
+// (such as internal/diag) can read already-processed snapshots without
+// collecting anything themselves. Returns nil before Register has run.
+func (h *Handler) Collector() *collect.Collector {
+	return h.collector
+}
+
+func (h *Handler) Register(g *echo.Group) error {
 	var err error
 	h.collector, err = collect.New(h.processor, h.opts)
 	if err != nil {
@@ -41,11 +48,11 @@ func (h *handler) Register(g *echo.Group) error {
 	return nil
 }
 
-func (h *handler) getIndex(c echo.Context) error {
+func (h *Handler) getIndex(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.collector.List())
 }
 
-func (h *handler) postIndex(c echo.Context) error {
+func (h *Handler) postIndex(c echo.Context) error {
 	target := &collect.SnapshotTarget{}
 	if err := c.Bind(target); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
@@ -60,7 +67,7 @@ func (h *handler) postIndex(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *handler) getId(c echo.Context) error {
+func (h *Handler) getId(c echo.Context) error {
 	r, err := h.collector.Get(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get entry: %w", err))
@@ -70,7 +77,7 @@ func (h *handler) getId(c echo.Context) error {
 	return c.Stream(http.StatusOK, "application/json", r)
 }
 
-func (h *handler) getData(c echo.Context) error {
+func (h *Handler) getData(c echo.Context) error {
 	id := c.Param("id")
 	entries := h.collector.List()
 	for _, entry := range entries {
@@ -86,7 +93,7 @@ func (h *handler) getData(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotFound)
 }
 
-func (h *handler) getLatestData(c echo.Context) error {
+func (h *Handler) getLatestData(c echo.Context) error {
 	label := c.QueryParam("label")
 
 	entries := h.collector.List()

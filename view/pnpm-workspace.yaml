@@ -1,0 +1,6 @@
+# @parcel/watcher is pulled in transitively as a dev-time file watcher. Its
+# native postinstall build is not needed to produce view/dist, so it is declined
+# rather than approved: fewer postinstall scripts keeps installs reproducible
+# and avoids making the release build depend on a native-addon toolchain.
+allowBuilds:
+  '@parcel/watcher': false

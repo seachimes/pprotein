@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
+    // "node" is the legacy algorithm and ignores the "exports" field, so type
+    // entry points published only through "exports" (such as vite/client) fail
+    // to resolve. "bundler" matches how Vite actually resolves modules.
+    "moduleResolution": "bundler",
     "strict": true,
     "jsx": "preserve",
     "sourceMap": true,
@@ -14,7 +17,12 @@
     //"noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    // vuex 4.1.0 ships types but does not expose them through its "exports"
+    // field, so "bundler" resolution cannot find them. Map it explicitly.
+    "paths": {
+      "vuex": ["./node_modules/vuex/types/index.d.ts"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

@@ -3,11 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "serve": "vite preview",
-    "lint": "eslint --ext .ts,.vue src",
-    "fix": "eslint --fix --ext .ts,.vue src"
+    "dev": "vp dev",
+    "build": "vue-tsc --noEmit && vp build",
+    "serve": "vp preview",
+    "lint": "vp lint -c .oxlintrc.json src",
+    "fmt": "vp fmt -c .oxfmtrc.json src",
+    "fix": "vp lint -c .oxlintrc.json --fix src && vp fmt -c .oxfmtrc.json src",
+    "check": "vp fmt -c .oxfmtrc.json --check src && vp lint -c .oxlintrc.json src && vue-tsc --noEmit"
   },
   "dependencies": {
     "@fontsource/courier-prime": "^5.0.17",
@@ -18,19 +20,16 @@
   },
   "devDependencies": {
     "@types/papaparse": "^5.3.11",
-    "@typescript-eslint/eslint-plugin": "^6.11.0",
-    "@typescript-eslint/parser": "^6.11.0",
-    "@vitejs/plugin-vue": "^4.4.1",
+    "@vitejs/plugin-vue": "^6.0.9",
     "@vue/compiler-sfc": "^3.3.8",
-    "@vue/eslint-config-prettier": "^8.0.0",
-    "@vue/eslint-config-typescript": "^12.0.0",
-    "eslint": "^8.53.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "eslint-plugin-vue": "^9.18.1",
-    "prettier": "^3.1.0",
     "sass": "^1.69.5",
-    "typescript": "^4.9.5",
-    "vite": "^4.5.0",
-    "vue-tsc": "^1.8.22"
-  }
+    "typescript": "~5.9",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3",
+    "vite-plus": "0.3.3",
+    "vue-tsc": "^3.3.11"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3"
+  },
+  "packageManager": "pnpm@11.8.0"
 }

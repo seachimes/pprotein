@@ -27,7 +27,9 @@ Optional negative control, expected to exit nonzero:
 SCROLL_NEGATIVE_CONTROL=1 PLAYWRIGHT_MODULE_ROOT=/tmp/pprotein-scroll-browser node view/tests/scroll-boundary.mjs
 ```
 
-This injects **browser-only** overrides matching the previous shared-section/root CSS (`position: static`, section overscroll containment, root default overscroll). It does not modify app sources or built files. It demonstrates that the test catches the previous escaped absolute-caption/root-overflow problem, but is not a substitute for separately checking out/building an earlier revision.
+This injects **browser-only** overrides reproducing the previous CSS: the screen-reader caption returns to `position: absolute`, and the shared section and root return to their earlier positioning and overscroll values. Because Vue emits scoped rules as `.visually-hidden[data-v-x]`, the override resolves the build's actual scope attribute at runtime — a bare class selector loses on specificity even with `!important`. It does not modify app sources or built files, and is not a substitute for separately checking out/building an earlier revision.
+
+Isolating the declarations identifies the caption as the root cause: with the caption anchored, reverting only the section's `position` no longer reproduces the overflow.
 
 ## Observed verification
 

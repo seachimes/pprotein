@@ -201,10 +201,26 @@ try {
         .waitFor();
       await page.evaluate(() => document.fonts.ready);
       // Optional negative control: reproduce pre-fix CSS in the browser only.
+      // The root cause was the screen-reader caption resolving against the
+      // viewport, so this must revert the caption as well as the container;
+      // reverting only the container no longer reproduces the failure.
       if (process.env.SCROLL_NEGATIVE_CONTROL === "1") {
+        // Scoped component styles are emitted as `.visually-hidden[data-v-x]`,
+        // which outranks a bare class selector even with !important, so read
+        // the build's actual scope attribute and match its specificity.
+        const scopes = await page.evaluate(() =>
+          [
+            ...new Set(
+              [...document.querySelectorAll(".visually-hidden")].flatMap((el) =>
+                el
+                  .getAttributeNames()
+                  .filter((name) => name.startsWith("data-v-")),
+              ),
+            ),
+          ].map((name) => `.visually-hidden[${name}]`),
+        );
         await page.addStyleTag({
-          content:
-            "section { position: static !important; overscroll-behavior: contain !important; } html, body { overscroll-behavior: auto !important; }",
+          content: `${[".visually-hidden", ...scopes].join(", ")} { position: absolute !important; top: auto !important; left: auto !important; } section { position: static !important; overscroll-behavior: contain !important; } html, body { overscroll-behavior: auto !important; }`,
         });
       }
       const section = page.locator("main > section");

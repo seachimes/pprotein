@@ -227,6 +227,11 @@ export default defineComponent({
 section {
   padding: 2em;
   overflow: auto;
+  // This section is the scroll container. As a flex item it would default to
+  // min-height: auto and grow to fit its content, which pushes it past the
+  // bottom of main and makes the document scroll too. Two nested scrollbars is
+  // what caused scrolling past the end to jump and leave a blank strip.
+  min-height: 0;
 }
 
 h2 {

@@ -2,6 +2,12 @@
   <main>
     <header>
       <router-link to="/">{{ $data.title }}</router-link>
+      <!-- Which build is actually serving. During a contest several builds get
+           deployed in quick succession, and a stale process is easy to mistake
+           for a change that did not work. -->
+      <span v-if="version" class="version" :title="versionTitle">{{
+        version
+      }}</span>
     </header>
     <nav>
       <router-link v-slot="{ navigate, isActive }" to="/diag/" custom>
@@ -39,11 +45,41 @@ import { defineComponent } from "vue";
 
 type Dict = { [key: string]: string };
 
+interface VersionInfo {
+  Version: string;
+  Revision: string;
+  Modified: boolean;
+  GoVersion: string;
+}
+
 export default defineComponent({
   data() {
     return {
       title: "pprotein ⚙",
+      version: "",
+      versionTitle: "",
     };
+  },
+  async mounted() {
+    // A failure here must not disturb the page: the version is informational,
+    // so it is simply omitted when unavailable.
+    try {
+      const resp = await fetch("/api/version");
+      if (!resp.ok) {
+        return;
+      }
+      const info = (await resp.json()) as VersionInfo;
+      this.version = info.Version;
+      this.versionTitle = [
+        info.Revision ? `revision: ${info.Revision}` : "",
+        info.GoVersion ? `built with ${info.GoVersion}` : "",
+        info.Modified ? "working tree had uncommitted changes" : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    } catch {
+      // ignore
+    }
   },
   watch: {
     $route({ params, meta }) {
@@ -74,8 +110,12 @@ body {
 main {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100vw;
+  // 100vw ignores the vertical scrollbar, so on any page tall enough to scroll
+  // the layout overflowed horizontally by the scrollbar's width and the browser
+  // pinned a horizontal scrollbar across the bottom of the window. 100% is
+  // measured against the actual content box and has no such gap.
+  height: 100dvh;
+  width: 100%;
 }
 
 a {
@@ -84,11 +124,21 @@ a {
 
 header {
   flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.8em;
   padding: 1em 2em;
   background-color: #111;
 
   a {
     color: #fff;
+  }
+
+  // Secondary to the product name: legible when looked for, quiet otherwise.
+  .version {
+    color: #999;
+    font-size: 0.8em;
+    cursor: help;
   }
 }
 

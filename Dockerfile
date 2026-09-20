@@ -22,7 +22,11 @@ RUN apk add --no-cache make libstdc++ libgcc \
 WORKDIR $GOPATH/src/app
 COPY . .
 
-RUN make build
+# `COPY . .` does not carry .git, so the Go toolchain cannot embed the revision
+# on its own. Pass it in to have the running build identify itself:
+#   docker build --build-arg VERSION=$(git describe --tags --always --dirty) .
+ARG VERSION=""
+RUN make build VERSION="$VERSION"
 
 # --------------------------------------------------
 

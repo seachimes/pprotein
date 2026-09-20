@@ -22,6 +22,13 @@ func NewHandler(opts *collect.Options) *handler {
 	return &handler{opts: opts}
 }
 
+// Collector exposes the underlying collector so that cross-cutting consumers
+// (such as internal/diag) can read already-collected snapshots. Returns nil
+// before Register has run.
+func (h *handler) Collector() *collect.Collector {
+	return h.collector
+}
+
 func (h *handler) Register(g *echo.Group) error {
 	p := &processor{mu: &sync.Mutex{}, route: g}
 

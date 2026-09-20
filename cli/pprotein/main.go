@@ -7,6 +7,7 @@ import (
 	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/internal/collect"
 	"github.com/kaz/pprotein/internal/collect/group"
+	"github.com/kaz/pprotein/internal/diag"
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/slp"
@@ -53,7 +54,8 @@ func start() error {
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := pprof.NewHandler(pprofOpts).Register(api.Group("/pprof")); err != nil {
+	pprofHandler := pprof.NewHandler(pprofOpts)
+	if err := pprofHandler.Register(api.Group("/pprof")); err != nil {
 		return err
 	}
 
@@ -100,6 +102,17 @@ func start() error {
 		return err
 	}
 	grp.RegisterHandlers(api.Group("/group"))
+
+	// diag reads what the collectors above have already produced; it must be
+	// registered after them so their collectors exist.
+	diagHandler := diag.NewHandler(
+		alpHandler.Collector(),
+		slpHandler.Collector(),
+		pprofHandler.Collector(),
+	)
+	if err := diagHandler.Register(api.Group("/diag")); err != nil {
+		return err
+	}
 
 	return e.Start(":" + port)
 }

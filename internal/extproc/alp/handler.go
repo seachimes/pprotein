@@ -16,6 +16,7 @@ type (
 	handler struct {
 		opts   *collect.Options
 		config *persistent.Handler
+		inner  *extproc.Handler
 	}
 )
 
@@ -36,10 +37,20 @@ func NewHandler(opts *collect.Options, store storage.Storage) (*handler, error) 
 	return h, nil
 }
 
+// Collector exposes the underlying collector for cross-cutting consumers such
+// as internal/diag. Returns nil before Register has run.
+func (h *handler) Collector() *collect.Collector {
+	if h.inner == nil {
+		return nil
+	}
+	return h.inner.Collector()
+}
+
 func (h *handler) Register(g *echo.Group) error {
 	h.config.RegisterHandlers(g.Group("/config"))
 
-	if err := extproc.NewHandler(&processor{confPath: h.config.GetPath()}, h.opts).Register(g); err != nil {
+	h.inner = extproc.NewHandler(&processor{confPath: h.config.GetPath()}, h.opts)
+	if err := h.inner.Register(g); err != nil {
 		return fmt.Errorf("failed to register extproc handlers: %w", err)
 	}
 	return nil

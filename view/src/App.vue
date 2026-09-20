@@ -102,16 +102,12 @@ export default defineComponent({
   box-sizing: border-box;
   font-family: "Courier Prime", monospace;
 }
-// The app is a fixed-height shell: the header and nav stay put and only the
-// content area scrolls. Pinning the document to the viewport keeps the page
-// itself from becoming a second scroll container — without this, content taller
-// than the window scrolled both the section and the document, which showed up
-// as a blank area appearing past the end of the content and as scroll position
-// getting stranded between the two.
+// Only the view content scrolls; disable viewport bounce as well as scrolling.
 html,
 body {
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 body {
   padding: 0;
@@ -177,14 +173,12 @@ nav {
 
 section {
   padding: 1em 2em;
-  // A flex item defaults to min-height: auto, which lets it grow to fit its
-  // content instead of shrinking to the container. That pushed the section past
-  // the bottom of main and made the document scroll as well as the section, so
-  // the view ended up with two nested scrollbars: scrolling to the end of one
-  // jumped into the other and left a blank strip behind.
   min-height: 0;
-  // Reaching either end must not chain the scroll outwards.
-  overscroll-behavior: contain;
+  // Keep absolutely positioned accessibility labels inside this scrollport,
+  // rather than positioning them against the viewport and expanding the page.
+  position: relative;
+  // Unlike contain, none also disables the local overscroll/bounce effect.
+  overscroll-behavior: none;
 }
 
 button {

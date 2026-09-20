@@ -99,7 +99,14 @@ export default defineComponent({
 <style scoped lang="scss">
 section {
   padding: 2em;
-  overflow: scroll;
+  // `scroll` renders both scrollbars unconditionally, so a table that fits
+  // still showed an inert vertical bar next to the page's own. `auto` shows a
+  // bar only on the axis that actually overflows.
+  overflow: auto;
+  // This section is the scroll container. A flex item defaults to
+  // min-height: auto and would grow to fit the table, pushing past the bottom
+  // of main and making the document scroll as well.
+  min-height: 0;
 }
 
 table {

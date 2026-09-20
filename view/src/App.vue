@@ -156,7 +156,11 @@ header {
 nav {
   flex-shrink: 0;
   display: flex;
-  overflow: auto;
+  // The tab strip scrolls sideways when it runs out of room, but it is a single
+  // row and must never scroll vertically. `overflow: auto` enables both axes
+  // and makes the nav yet another scroll container in the page.
+  overflow-x: auto;
+  overflow-y: hidden;
   background-color: #333;
   color: #fff;
 

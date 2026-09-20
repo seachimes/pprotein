@@ -32,9 +32,16 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
+  // This container is itself a flex item of main. Without this it grows to fit
+  // the child view instead of shrinking to the space available, which pushes
+  // the content past the bottom of the window.
+  min-height: 0;
 }
 
 nav {
+  // Keep the group's own tab strip at its natural height so it is not squeezed
+  // when the content below is tall.
+  flex-shrink: 0;
   background-color: #555;
 }
 </style>

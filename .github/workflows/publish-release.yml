@@ -18,6 +18,17 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      # goreleaser's before hooks build view/dist with pnpm, so the toolchain
+      # has to be present. Versions are taken from mise.toml / package.json so
+      # the release matches what is used locally.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+          cache-dependency-path: view/pnpm-lock.yaml
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: "~> v2"

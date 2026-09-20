@@ -4,6 +4,12 @@
       <router-link to="/">{{ $data.title }}</router-link>
     </header>
     <nav>
+      <router-link v-slot="{ navigate, isActive }" to="/diag/" custom>
+        <div :class="{ active: isActive }" @click="navigate">diag</div>
+      </router-link>
+      <router-link v-slot="{ navigate, isActive }" to="/diff/" custom>
+        <div :class="{ active: isActive }" @click="navigate">diff</div>
+      </router-link>
       <router-link v-slot="{ navigate, isActive }" to="/range/" custom>
         <div :class="{ active: isActive }" @click="navigate">range</div>
       </router-link>

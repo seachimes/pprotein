@@ -350,8 +350,13 @@ tr.worsened th {
   background: #fdf2f0;
 }
 
+// Screen-reader-only caption. `fixed` takes it out of flow without resolving
+// against an ancestor, so it cannot stretch the page even if this markup is
+// ever reused outside a positioned scroll container.
 .visually-hidden {
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;

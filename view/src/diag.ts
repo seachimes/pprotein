@@ -112,6 +112,20 @@ export interface DiffTotals {
   QueryTimePct: number;
   ErrorsBefore: number;
   ErrorsAfter: number;
+  /** Absent unless a benchmark score was recorded for both runs. */
+  Score?: ScoreDiff;
+}
+
+export interface ScoreDiff {
+  Before: number;
+  After: number;
+  Delta: number;
+  Pct: number;
+  PassedBefore: boolean;
+  PassedAfter: boolean;
+  Direction: DiffDirection;
+  /** The run got faster but scored lower, so the readings disagree. */
+  Conflict: boolean;
 }
 
 export interface DiffReport {

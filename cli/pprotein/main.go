@@ -134,6 +134,7 @@ func start() error {
 		alpHandler.Collector(),
 		slpHandler.Collector(),
 		pprofHandler.Collector(),
+		scoreHandler.Collector(),
 	)
 	if err := diagHandler.Register(api.Group("/diag")); err != nil {
 		return err

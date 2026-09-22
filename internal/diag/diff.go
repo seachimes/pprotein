@@ -89,6 +89,42 @@ type (
 
 		ErrorsBefore int `json:"ErrorsBefore"`
 		ErrorsAfter  int `json:"ErrorsAfter"`
+
+		// Score is the benchmark result when one was recorded for both runs.
+		// It is the only measure that decides the contest, so when it is
+		// present it overrides the latency reading rather than sitting beside
+		// it.
+		Score *ScoreDiff `json:"Score,omitempty"`
+	}
+
+	// ScoreRun is one recorded benchmark result, as diag consumes it. It
+	// mirrors the stored score without importing the score package, keeping
+	// the dependency pointing one way.
+	ScoreRun struct {
+		Score  int64
+		Passed bool
+	}
+
+	// ScoreDiff compares the benchmark scores of the two runs.
+	ScoreDiff struct {
+		Before int64   `json:"Before"`
+		After  int64   `json:"After"`
+		Delta  int64   `json:"Delta"`
+		Pct    float64 `json:"Pct"`
+
+		// PassedBefore and PassedAfter record whether each run completed. A
+		// failed run scores zero, which would otherwise read as a catastrophic
+		// regression rather than a broken benchmark.
+		PassedBefore bool `json:"PassedBefore"`
+		PassedAfter  bool `json:"PassedAfter"`
+
+		Direction DiffDirection `json:"Direction"`
+
+		// Conflict marks the case that makes recording scores worthwhile: the
+		// application got faster yet scored lower. That usually means the
+		// change broke validation, and reading only the latency would call it
+		// a success.
+		Conflict bool `json:"Conflict"`
 	}
 )
 
@@ -270,6 +306,47 @@ func Compare(beforeGroup, afterGroup string, before, after Input) DiffReport {
 	rep.Totals.QueryTimePct = pctChange(qBefore, qAfter)
 
 	return rep
+}
+
+// CompareScore builds the score comparison for a diff.
+//
+// The score decides the contest, so its verdict is not averaged with the
+// latency reading: a run that got faster but scored lower is a regression. The
+// conflict flag marks exactly that case so the UI can explain why the two
+// readings disagree instead of quietly preferring one.
+func CompareScore(before, after *ScoreRun, latency DiffDirection) *ScoreDiff {
+	if before == nil || after == nil {
+		return nil
+	}
+
+	d := &ScoreDiff{
+		Before:       before.Score,
+		After:        after.Score,
+		Delta:        after.Score - before.Score,
+		Pct:          pctChange(float64(before.Score), float64(after.Score)),
+		PassedBefore: before.Passed,
+		PassedAfter:  after.Passed,
+	}
+
+	switch {
+	// A broken benchmark is the most urgent thing to report: its score is not
+	// a measurement at all, so it is judged before any numeric comparison.
+	case !after.Passed:
+		d.Direction = DirWorsened
+	case !before.Passed:
+		// Recovering from a failed run is progress even if the number is lower
+		// than some earlier successful run.
+		d.Direction = DirImproved
+	case d.Delta > 0:
+		d.Direction = DirImproved
+	case d.Delta < 0:
+		d.Direction = DirWorsened
+	default:
+		d.Direction = DirNeutral
+	}
+
+	d.Conflict = d.Direction == DirWorsened && latency == DirImproved
+	return d
 }
 
 func perRequest(total float64, reqs int) float64 {

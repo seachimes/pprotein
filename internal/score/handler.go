@@ -61,6 +61,12 @@ func (h *handler) Register(g *echo.Group) error {
 	return nil
 }
 
+// Collector exposes the stored scores so diag can read them, matching how the
+// other handlers share their collectors.
+func (h *handler) Collector() *collect.Collector {
+	return h.collector
+}
+
 func (h *handler) getIndex(c echo.Context) error {
 	list := h.collector.List()
 	for _, e := range list {

@@ -1,0 +1,31 @@
+package score
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/kaz/pprotein/internal/collect"
+)
+
+type processor struct{}
+
+// Cacheable reports false because the stored body is already the final form;
+// there is nothing to derive that would be worth caching.
+func (p *processor) Cacheable() bool {
+	return false
+}
+
+func (p *processor) Process(snapshot *collect.Snapshot) (io.ReadCloser, error) {
+	bodyPath, err := snapshot.BodyPath()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find snapshot body: %w", err)
+	}
+
+	res, err := os.ReadFile(bodyPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read snapshot body: %w", err)
+	}
+	return io.NopCloser(bytes.NewBuffer(res)), nil
+}

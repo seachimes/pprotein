@@ -38,6 +38,11 @@ type (
 		Flagged   bool
 		Comment   string
 	}
+
+	// CollectResult is the response of a collect request.
+	CollectResult struct {
+		GroupId string
+	}
 )
 
 //go:embed targets.json
@@ -110,7 +115,10 @@ func (cl *Collector) collectAll(c echo.Context) error {
 	if err := eg.Wait(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to collect: %v", err))
 	}
-	return c.NoContent(http.StatusOK)
+	// Report the group id so the caller can tie a later benchmark score to this
+	// collection. Previously the id was generated here and never surfaced, which
+	// left callers unable to reference the collection they had just started.
+	return c.JSON(http.StatusOK, &CollectResult{GroupId: grpId})
 }
 func (cl *Collector) makeInternalRequest(grpId string, target CollectTarget) error {
 	body, err := json.Marshal(&collect.SnapshotTarget{

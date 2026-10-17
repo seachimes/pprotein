@@ -13,6 +13,7 @@ import (
 	"github.com/kaz/pprotein/internal/extproc/slp"
 	"github.com/kaz/pprotein/internal/memo"
 	"github.com/kaz/pprotein/internal/pprof"
+	"github.com/kaz/pprotein/internal/score"
 	"github.com/kaz/pprotein/internal/storage"
 	"github.com/kaz/pprotein/internal/version"
 	"github.com/kaz/pprotein/view"
@@ -102,6 +103,25 @@ func start() error {
 		return err
 	}
 
+	scoreOpts := &collect.Options{
+		Type:     "score",
+		Ext:      "-score.json",
+		Store:    store,
+		EventHub: hub,
+	}
+	// The sources let a score with no GroupId attach to the newest collection,
+	// which is how a benchmark shell records a score without knowing the id
+	// pprotein generated.
+	scoreHandler := score.NewHandler(
+		scoreOpts,
+		alpHandler.Collector(),
+		slpHandler.Collector(),
+		pprofHandler.Collector(),
+	)
+	if err := scoreHandler.Register(api.Group("/score")); err != nil {
+		return err
+	}
+
 	grp, err := group.NewCollector(store, port)
 	if err != nil {
 		return err
@@ -114,6 +134,7 @@ func start() error {
 		alpHandler.Collector(),
 		slpHandler.Collector(),
 		pprofHandler.Collector(),
+		scoreHandler.Collector(),
 	)
 	if err := diagHandler.Register(api.Group("/diag")); err != nil {
 		return err

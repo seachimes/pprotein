@@ -35,7 +35,23 @@
 
     <template v-if="diff">
       <h2>全体</h2>
+      <p v-if="diff.Totals.Score?.Conflict" class="conflict">
+        速くなっていますが、スコアは下がっています。ベンチマークが失敗している、
+        または整合性チェックに引っかかっている可能性があります。
+      </p>
       <dl class="totals">
+        <!-- The score decides the contest, so it leads the summary. -->
+        <div v-if="diff.Totals.Score" class="score">
+          <dt>スコア</dt>
+          <dd :class="scoreClass">
+            {{ formatInt(diff.Totals.Score.Before) }} →
+            {{ formatInt(diff.Totals.Score.After) }}
+            <span class="delta">({{ scoreDelta }})</span>
+            <span v-if="!diff.Totals.Score.PassedAfter" class="failed"
+              >FAIL</span
+            >
+          </dd>
+        </div>
         <div>
           <dt>リクエスト数</dt>
           <dd>
@@ -182,6 +198,20 @@ export default defineComponent({
       if (t.ErrorsAfter < t.ErrorsBefore) return "improved";
       return "";
     },
+    scoreClass(): string {
+      const s = this.diff?.Totals.Score;
+      if (!s || s.Direction === "neutral") return "";
+      return s.Direction;
+    },
+    scoreDelta(): string {
+      const s = this.diff?.Totals.Score;
+      if (!s) return "";
+      // A zero baseline has no meaningful percentage, which happens whenever
+      // the earlier run failed.
+      if (s.Before === 0) return s.Delta >= 0 ? `+${s.Delta}` : `${s.Delta}`;
+      const sign = s.Pct > 0 ? "+" : "";
+      return `${sign}${s.Pct.toFixed(1)}%`;
+    },
   },
   async mounted() {
     const groups = await fetchGroups();
@@ -283,6 +313,36 @@ h2 {
     font-size: 1.2em;
     font-weight: bold;
   }
+
+  // The score is the measure that decides the contest, so it is set apart from
+  // the supporting metrics rather than reading as one more number in the row.
+  .score {
+    padding-inline-end: 2em;
+    border-inline-end: 1px solid #ddd;
+
+    dd {
+      font-size: 1.5em;
+    }
+    .delta {
+      font-size: 0.7em;
+    }
+    .failed {
+      margin-inline-start: 0.4em;
+      padding: 0.1em 0.4em;
+      border-radius: 0.2em;
+      background: #c0392b;
+      color: #fff;
+      font-size: 0.6em;
+      vertical-align: middle;
+    }
+  }
+}
+
+.conflict {
+  margin: 0 0 1em;
+  padding: 0.6em 0.8em;
+  background: #fdf3e7;
+  border-inline-start: 0.25em solid #d35400;
 }
 
 .diff {

@@ -1,11 +1,13 @@
 package diag
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/kaz/pprotein/internal/collect"
 	"github.com/labstack/echo/v4"
@@ -24,6 +26,7 @@ type Handler struct {
 	httplog Source
 	slowlog Source
 	pprof   Source
+	score   Source
 
 	thresholds Thresholds
 }
@@ -31,11 +34,12 @@ type Handler struct {
 // NewHandler wires diag to the collectors owned by the other handlers. Any of
 // them may be nil, in which case the corresponding rules are skipped and the
 // gap is reported as a health issue.
-func NewHandler(httplog, slowlog, pprofSrc Source) *Handler {
+func NewHandler(httplog, slowlog, pprofSrc, scoreSrc Source) *Handler {
 	return &Handler{
 		httplog:    httplog,
 		slowlog:    slowlog,
 		pprof:      pprofSrc,
+		score:      scoreSrc,
 		thresholds: DefaultThresholds(),
 	}
 }
@@ -135,7 +139,47 @@ func (h *Handler) getDiff(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to build after input: %v", err))
 	}
 
-	return c.JSON(http.StatusOK, Compare(beforeID, afterID, before, after))
+	rep := Compare(beforeID, afterID, before, after)
+	// The score is attached after the fact because it is recorded separately
+	// from the profiling data and may be missing for either run.
+	rep.Totals.Score = CompareScore(
+		h.scoreOf(beforeID),
+		h.scoreOf(afterID),
+		directionForLowerIsBetter(rep.Totals.AppTimePct, DiffBoth),
+	)
+
+	return c.JSON(http.StatusOK, rep)
+}
+
+// scoreOf returns the benchmark result recorded for a group, or nil when none
+// was reported. When a group holds several runs the newest one wins, so that
+// re-running the benchmark against the same collection reflects the latest
+// attempt.
+func (h *Handler) scoreOf(gid string) *ScoreRun {
+	if h.score == nil {
+		return nil
+	}
+
+	var (
+		newest *ScoreRun
+		at     time.Time
+	)
+	for _, e := range entriesOf(h.score, gid) {
+		r, err := h.score.Get(e.Snapshot.ID)
+		if err != nil {
+			continue
+		}
+		var v ScoreRun
+		err = json.NewDecoder(r).Decode(&v)
+		r.Close()
+		if err != nil {
+			continue
+		}
+		if newest == nil || e.Snapshot.Datetime.After(at) {
+			newest, at = &v, e.Snapshot.Datetime
+		}
+	}
+	return newest
 }
 
 // buildInput gathers every processed artifact belonging to a group.

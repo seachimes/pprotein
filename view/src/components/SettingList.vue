@@ -19,5 +19,7 @@ export default defineComponent({
 <style scoped lang="scss">
 section {
   margin: 2em;
+  // html/body do not scroll, so each view owns its own scrolling.
+  overflow: auto;
 }
 </style>

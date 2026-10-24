@@ -39,8 +39,12 @@ export interface Config extends Omit<SnapshotTarget, "GroupId"> {
   Type: string;
 }
 
+// Types with a detail view of their own. A score is shown in the list through
+// its summary and has nothing to open.
+export const hasDetail = (type: string) => type !== "score";
+
 const state = {
-  endpoints: ["memo", "pprof", "httplog", "slowlog"],
+  endpoints: ["memo", "pprof", "httplog", "slowlog", "score"],
   groups: [] as string[],
   entries: {} as { [key: string]: Entry },
 
@@ -55,8 +59,20 @@ const syncEntriesPlugin = (store: Store<typeof state>) => {
     store.commit("saveEntry", entry);
   });
 
-  store.state.endpoints.forEach((endpoint) => {
-    store.dispatch("fetchEntries", { endpoint });
+  const fetchAll = () =>
+    store.state.endpoints.forEach((endpoint) => {
+      store.dispatch("fetchEntries", { endpoint });
+    });
+  fetchAll();
+
+  // The stream reconnects by itself after a drop, but anything published while
+  // it was down is gone. Refetch on every reconnect so the list catches up.
+  let opened = false;
+  es.addEventListener("open", () => {
+    if (opened) {
+      fetchAll();
+    }
+    opened = true;
   });
 };
 
@@ -155,7 +171,7 @@ export default createStore({
     availableEntriesByGroup: (_, getters) => (groupId: string) => {
       return getters
         .entriesByGroup(groupId)
-        .filter((e: Entry) => e.Status == "ok");
+        .filter((e: Entry) => e.Status == "ok" && hasDetail(e.Snapshot.Type));
     },
     entriesInRange: (state) => (range: TimeRange) => {
       return Object.values(state.entries)

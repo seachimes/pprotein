@@ -37,12 +37,14 @@ export default defineComponent({
     },
   },
   data(): { url: string; duration: string } {
-    return {
-      url: this.stored("url") ?? "http://",
-      duration: this.stored("duration") ?? "60",
-    };
+    // Filled in by the `load` watcher, which runs immediately.
+    return { url: "http://", duration: "60" };
   },
   computed: {
+    // Everything the fields are loaded from; any change reloads them.
+    load(): unknown[] {
+      return [this.$props.endpoint, this.configured];
+    },
     // The target configured for this endpoint under "group/targets", which is
     // what the group Collect uses. Settings load asynchronously.
     configured(): { URL: string; Duration: number } | undefined {
@@ -60,21 +62,20 @@ export default defineComponent({
     },
   },
   watch: {
+    // Switching tabs between endpoints reuses this component, so the fields
+    // must be reloaded whenever the endpoint changes, not only on mount.
     // A value the user typed wins; the configured target only fills what they
     // have not touched. It is deliberately not written to localStorage, so a
     // later change to the targets still shows up.
-    configured: {
+    load: {
       immediate: true,
-      handler(t) {
-        if (!t) {
-          return;
-        }
-        if (this.stored("url") === null) {
-          this.$data.url = t.URL;
-        }
-        if (this.stored("duration") === null) {
-          this.$data.duration = String(t.Duration);
-        }
+      handler() {
+        const t = this.configured;
+        this.$data.url = this.stored("url") ?? t?.URL ?? "http://";
+        this.$data.duration =
+          this.stored("duration") ??
+          (t ? String(t.Duration) : undefined) ??
+          "60";
       },
     },
   },

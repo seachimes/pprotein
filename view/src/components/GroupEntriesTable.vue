@@ -13,7 +13,7 @@
       <tr v-for="entry in visibleEntries" :key="entry.Snapshot.ID">
         <td>
           <router-link
-            v-if="entry.Status == `ok`"
+            v-if="entry.Status == `ok` && hasDetail(entry.Snapshot.Type)"
             :to="`/group/${$props.groupId}/${entry.Snapshot.Type}/${entry.Snapshot.ID}/`"
           >
             Open
@@ -30,7 +30,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { Entry } from "../store";
+import { Entry, hasDetail } from "../store";
 import Commit from "./Commit.vue";
 import Status from "./Status.vue";
 
@@ -53,6 +53,7 @@ export default defineComponent({
       default: undefined,
     },
   },
+  methods: { hasDetail },
   computed: {
     visibleEntries() {
       return this.$props.length

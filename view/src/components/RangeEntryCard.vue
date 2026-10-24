@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { Entry } from "../store";
+import { Entry, hasDetail } from "../store";
 import Commit from "./Commit.vue";
 import Status from "./Status.vue";
 import TsvPanel from "./TsvPanel.vue";
@@ -81,6 +81,9 @@ export default defineComponent({
     },
     detailPath() {
       const { GroupId, Type, ID } = this.snapshot;
+      if (!hasDetail(Type)) {
+        return undefined;
+      }
       if (GroupId) {
         return `/group/${GroupId}/${Type}/${ID}/`;
       }
